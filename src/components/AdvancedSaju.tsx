@@ -12,6 +12,7 @@ import {
   getLifeStage,
   LIFE_STAGE_HANJA,
   LIFE_STAGE_TEXT,
+  MONTH_BRANCH_NATURE,
 } from "@/lib/saju-advanced";
 import type { FourPillarsDetail } from "@/lib/saju-utils";
 
@@ -39,9 +40,42 @@ export default function AdvancedSaju({ detail }: { detail: FourPillarsDetail }) 
 
   const gyukguk = getGyukguk(dayMaster, detail.month.earthlyBranch);
   const sinsal = findSinsal(dayMaster, detail.year.earthlyBranch, detail.day.earthlyBranch, allBranches);
+  const monthBranch = detail.month.earthlyBranch;
+  const nature = MONTH_BRANCH_NATURE[monthBranch];
 
   return (
     <div className="flex flex-col gap-8">
+      {/* 월지 기질 */}
+      <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5">
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-foreground/60">
+            월지(月支) 기질 — {monthBranch}
+            {branchHanja(monthBranch)}월생
+          </h2>
+          <p className="mt-1 text-xs text-foreground/40">
+            월지는 태어난 계절이자 사주에서 가장 힘이 센 자리예요. 절기 기준이라 {nature.term} 이후, 대략 양력{" "}
+            {nature.solarMonth}월에 해당합니다.
+          </p>
+        </div>
+
+        <p className="rounded-xl bg-[var(--brand-soft)] p-4 text-sm leading-relaxed text-foreground/80">
+          {nature.season}
+        </p>
+
+        <p className="mt-3 text-lg font-bold text-[var(--brand)]">{nature.title}</p>
+        <p className="mt-1 text-sm leading-relaxed text-foreground/75">{nature.text}</p>
+
+        <div className="mt-3 rounded-xl border border-[var(--card-border)] p-4">
+          <p className="mb-1 text-xs font-medium text-[var(--brand)]">일·사회생활에서는</p>
+          <p className="text-sm text-foreground/70">{nature.work}</p>
+        </div>
+
+        <Evidence>
+          월주 지지 {monthBranch}
+          {branchHanja(monthBranch)} ({nature.term} 절입 이후 출생)
+        </Evidence>
+      </section>
+
       {/* 격국 */}
       <section className="rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5">
         <h2 className="mb-3 text-sm font-semibold text-foreground/60">격국(格局) — 사주의 큰 틀</h2>
