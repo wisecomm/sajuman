@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useMemo, useState } from "react";
 import BirthForm from "@/components/BirthForm";
 import { useMyBirthInfo } from "@/lib/use-birth-info";
@@ -46,20 +47,20 @@ export default function DaeunPage() {
   const influence =
     detail && activePillar
       ? describePillarInfluence(
-          detail.day.heavenlyStem,
-          activePillar.pillar,
-          `${activePillar.age}세부터 시작하는 이 대운`,
-          getAgeBracket(activePillar.age),
-        )
+        detail.day.heavenlyStem,
+        activePillar.pillar,
+        `${activePillar.age}세부터 시작하는 이 대운`,
+        getAgeBracket(activePillar.age),
+      )
       : null;
 
   const energyPoints =
     detail && luck
       ? luck.pillars.map((p) => ({
-          age: p.age,
-          stage: getLifeStage(detail.day.heavenlyStem, p.pillar.earthlyBranch),
-          korean: p.korean,
-        }))
+        age: p.age,
+        stage: getLifeStage(detail.day.heavenlyStem, p.pillar.earthlyBranch),
+        korean: p.korean,
+      }))
       : [];
   const activeStage = activePillar && detail ? getLifeStage(detail.day.heavenlyStem, activePillar.pillar.earthlyBranch) : null;
 
