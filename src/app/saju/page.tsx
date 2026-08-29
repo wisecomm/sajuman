@@ -146,9 +146,13 @@ export default function SajuPage() {
             <section className="flex flex-col gap-4 rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5">
               <h2 className="text-sm font-semibold text-foreground/60">사주 풀이</h2>
 
-              <p className="rounded-xl bg-[var(--brand-soft)] p-4 text-sm leading-relaxed text-foreground/80">
-                {interp.summary}
-              </p>
+              <div className="flex flex-col gap-3 rounded-xl bg-[var(--brand-soft)] p-4">
+                {interp.paragraphs.map((para, i) => (
+                  <p key={i} className="text-sm leading-relaxed text-foreground/80">
+                    {para}
+                  </p>
+                ))}
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-[var(--card-border)] p-4">

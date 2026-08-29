@@ -1,6 +1,7 @@
 import {
   getBranchTenGod,
   getTenGod,
+  type EarthlyBranch,
   type FiveElement,
   type FourPillarsDetail,
   type Gender,
@@ -8,6 +9,13 @@ import {
   type Pillar,
   type TenGod,
 } from "./manseryeok";
+import {
+  findSinsal,
+  getGyukguk,
+  getLifeStage,
+  LIFE_STAGE_TEXT,
+  MONTH_BRANCH_NATURE,
+} from "./saju-advanced";
 
 /* ------------------------------------------------------------------ *
  * 나이대 — 같은 사주도 나이에 따라 읽는 각도가 달라진다
@@ -366,7 +374,8 @@ export interface SajuInterpretation {
   strongCategories: LifeCategory[];
   weakCategories: LifeCategory[];
   relatives: RelativeNote[];
-  summary: string;
+  /** 사주 풀이 본문 — 주제별로 끊은 문단 */
+  paragraphs: string[];
 }
 
 export function interpretSaju(
@@ -443,17 +452,73 @@ export function interpretSaju(
     return { group, relative, category: GROUP_LIFE_CATEGORY[group], count, text };
   });
 
+  // 아래 카드의 '설명'은 모두 요약에 담는다.
+  // 다만 카드의 라벨·수치(병 태양(丙火) / 화 과다 (4개) / 비견 (비겁, 2개) 같은 표기)는 넣지 않는다.
+  // 그건 카드가 이미 보여주므로, 요약에까지 넣으면 같은 값이 두 번 읽힌다.
   const nameLabel = displayName ? `${displayName}님은` : "이 사주는";
-  const parts = [`${nameLabel} 일간이 ${dayMaster}, ${title}이에요. ${text}`, strengthText];
 
-  if (dominant) parts.push(`오행 중에서는 ${josa(dominant[0], "이가")} 유난히 많아요. ${ELEMENT_EXCESS_TEXT[dominant[0]]}`);
+  // 한 덩어리로 두면 너무 길어서, 주제가 바뀌는 곳에서 문단을 끊는다.
+  const 성격: string[] = [`${nameLabel} ${text}`, strengthText];
+
+  const 기운균형: string[] = [];
+  if (dominant) {
+    기운균형.push(`오행 중에서는 ${josa(dominant[0], "이가")} 유난히 많아요. ${ELEMENT_EXCESS_TEXT[dominant[0]]}`);
+  }
   if (lacking.length > 0) {
-    parts.push(`반대로 ${lacking.join(", ")} 기운은 하나도 없어요. ${lacking.map((el) => ELEMENT_LACK_TEXT[el]).join(" ")}`);
+    기운균형.push(
+      `반대로 ${lacking.join(", ")} 기운은 하나도 없어요. ${lacking.map((el) => ELEMENT_LACK_TEXT[el]).join(" ")}`,
+    );
   }
-  if (dominantGod) parts.push(`십신 중에서는 ${josa(dominantGod[0], "이가")} 두드러져요. ${tenGodText(dominantGod[0], bracket)}`);
+  if (dominantGod) {
+    기운균형.push(`십신 중에서는 ${josa(dominantGod[0], "이가")} 두드러져요. ${tenGodText(dominantGod[0], bracket)}`);
+  }
+
+  const monthBranch = detail.month.earthlyBranch;
+  const nature = MONTH_BRANCH_NATURE[monthBranch];
+  const gyukguk = getGyukguk(dayMaster, monthBranch);
+  const 큰틀: string[] = [
+    // 이름/지시어는 첫 문단에서 이미 썼으므로 여기서는 반복하지 않는다
+    `태어난 달로 보면 ${monthBranch}월생이라 '${nature.title}'에 가까워요. ${nature.text}`,
+    `사주의 큰 틀인 격국은 ${gyukguk.name}이에요. ${gyukguk.text}`,
+  ];
+
+  const dayStage = getLifeStage(dayMaster, detail.day.earthlyBranch);
+  const allBranches: EarthlyBranch[] = [
+    detail.year.earthlyBranch,
+    detail.month.earthlyBranch,
+    detail.day.earthlyBranch,
+    detail.hour.earthlyBranch,
+  ];
+  const sinsal = findSinsal(dayMaster, detail.year.earthlyBranch, detail.day.earthlyBranch, allBranches);
+  const 세기와별: string[] = [
+    `일주 자리에서 일간이 받는 기운은 십이운성으로 ${dayStage}인데, ${LIFE_STAGE_TEXT[dayStage]}`,
+  ];
+  if (sinsal.length > 0) {
+    세기와별.push(`신살로는 ${sinsal.map((s) => s.name).join(", ")}이 붙어요. ${sinsal[0].text}`);
+  }
+  if (detail.voidBranches.length > 0) {
+    // 마지막 글자의 받침에 따라 '이에요/예요'가 갈린다 (술, 해 → 해예요)
+    const voidList = detail.voidBranches.join(", ");
+    세기와별.push(
+      `공망은 ${voidList}${hasBatchim(voidList) ? "이에요" : "예요"}. ` +
+        `이 지지에 해당하는 때에는 일이 헛되이 흩어지기 쉽다고 봐요.`,
+    );
+  }
+
+  const 사람과시기: string[] = [];
+  const focusRelative = relatives[0];
+  if (focusRelative) {
+    사람과시기.push(`사람 관계에서는 ${focusRelative.relative} 쪽이 먼저 눈에 들어와요. ${focusRelative.text}`);
+  }
+
   if (strongCategories.length > 0) {
-    parts.push(`지금 ${bracket}기에 눈여겨볼 만한 건 ${strongCategories.slice(0, 2).join(", ")}이에요.`);
+    사람과시기.push(`지금 ${bracket}기에 눈여겨볼 만한 건 ${strongCategories.slice(0, 2).join(", ")}이에요.`);
   }
+
+  // 빈 그룹은 버리고, 각 그룹을 한 문단으로 합친다
+  const paragraphs = [성격, 기운균형, 큰틀, 세기와별, 사람과시기]
+    .filter((group) => group.length > 0)
+    .map((group) => group.join(" "));
 
   return {
     dayMasterTitle: title,
@@ -467,7 +532,7 @@ export function interpretSaju(
     strongCategories,
     weakCategories,
     relatives,
-    summary: parts.join(" "),
+    paragraphs,
   };
 }
 
